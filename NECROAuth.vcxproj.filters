@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="NECROAuth">
+      <UniqueIdentifier>{eb69edc7-c8bd-4af2-b0cf-a2b052387db9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROAuth\Logger">
+      <UniqueIdentifier>{150b46f8-400f-494a-829c-a7f458f90465}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROAuth\Socket">
+      <UniqueIdentifier>{5f2b9122-d817-4f44-9fdd-deab7c165374}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NECROAuth.cpp">
+      <Filter>NECROAuth</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="ConsoleLogger.cpp">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="FileLogger.cpp">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="TCPSocket.cpp">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NECROAuth.h">
+      <Filter>NECROAuth</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>NECROAuth</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleLogger.h">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="FileLogger.h">
+      <Filter>NECROAuth\Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketUtility.h">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="SocketAddress.h">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="TCPSocket.h">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
