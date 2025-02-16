@@ -2,6 +2,8 @@
 
 #include "SocketUtility.h"
 #include "TCPSocket.h"
+#include "Packet.h"
+
 #include <memory>
 
 NECROAuth server;
@@ -23,7 +25,8 @@ void NECROAuth::Update()
 	LOG_OK("NECROAuth is running...");
 
 	// DEBUG: Just a quick test
-	SocketAddress localAddr(AF_INET, INADDR_ANY, 61531);
+	uint16_t inPort = 61531;
+	SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
 	TCPSocket listenerSocket(SocketAddressesFamily::INET);
 
 	int flag = 1;
@@ -34,10 +37,18 @@ void NECROAuth::Update()
 
 	std::shared_ptr<TCPSocket> inSock;
 
-	// Engine Loop
+	// @DEBUG just for debugging
+	Packet p;
+	p.Print();
+	uint8_t uint = 1;
+	p.Append(&uint, sizeof(uint8_t));
+	p.Print();
+	p << std::string("hello") << " " << " world!";
+	p.Print();
+
+	// Server Loop
 	while (isRunning)
 	{
-		// Loop
 		SocketAddress otherAddress;
 		if (inSock = listenerSocket.Accept(otherAddress))
 		{

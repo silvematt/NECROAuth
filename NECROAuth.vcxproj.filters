@@ -22,6 +22,12 @@
     <Filter Include="NECROAuth\Socket">
       <UniqueIdentifier>{5f2b9122-d817-4f44-9fdd-deab7c165374}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NECROAuth\Authentication">
+      <UniqueIdentifier>{afb7681e-60dd-43a0-bf01-c30357e21a22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROAuth\Packets">
+      <UniqueIdentifier>{73ee9194-45ee-4bae-a763-31be214a853f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -41,6 +47,12 @@
     </ClCompile>
     <ClCompile Include="TCPSocket.cpp">
       <Filter>NECROAuth\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="AuthSession.cpp">
+      <Filter>NECROAuth\Authentication</Filter>
+    </ClCompile>
+    <ClCompile Include="Packet.cpp">
+      <Filter>NECROAuth\Packets</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -67,6 +79,18 @@
     </ClInclude>
     <ClInclude Include="TCPSocket.h">
       <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="AuthSession.h">
+      <Filter>NECROAuth\Authentication</Filter>
+    </ClInclude>
+    <ClInclude Include="Packet.h">
+      <Filter>NECROAuth\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkMessage.h">
+      <Filter>NECROAuth\Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="AuthCodes.h">
+      <Filter>NECROAuth\Authentication</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

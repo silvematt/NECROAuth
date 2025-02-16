@@ -8,10 +8,16 @@ typedef SOCKET sock_t;
 typedef int sock_t;
 #endif
 
-#include "SocketAddress.h"
 #include <memory>
+#include <cstdint>
+#include <queue>
 
-const int TCP_LISTEN_DEFUALT_BACKLOG = 128;
+#include "SocketAddress.h"
+#include "NetworkMessage.h"
+
+#define READ_BLOCK_SIZE 4096
+
+const int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
 
 enum SocketAddressesFamily
 {
@@ -27,6 +33,16 @@ class TCPSocket
 private:
 	friend class SocketAddress;
 	sock_t m_socket;
+
+	SocketAddress remoteAddress;
+	uint16_t remotePort;
+
+	// Read/Write buffers
+	NetworkMessage inBuffer;
+	std::queue<NetworkMessage> outQueue;
+
+	bool closed;
+	bool closing;
 
 public:
 	TCPSocket(SocketAddressesFamily family);

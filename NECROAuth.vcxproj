@@ -131,18 +131,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AuthSession.cpp" />
     <ClCompile Include="ConsoleLogger.cpp" />
     <ClCompile Include="FileLogger.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NECROAuth.cpp" />
+    <ClCompile Include="Packet.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AuthCodes.h" />
+    <ClInclude Include="AuthSession.h" />
     <ClInclude Include="ConsoleLogger.h" />
     <ClInclude Include="FileLogger.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="NECROAuth.h" />
+    <ClInclude Include="Packet.h" />
+    <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="SocketAddress.h" />
     <ClInclude Include="SocketUtility.h" />
     <ClInclude Include="TCPSocket.h" />
