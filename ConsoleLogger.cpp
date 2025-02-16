@@ -1,4 +1,5 @@
 #include "ConsoleLogger.h"
+#include <cstdarg>
 
 ConsoleLogger* ConsoleLogger::Instance()
 {
@@ -33,8 +34,15 @@ std::string ConsoleLogger::GetColor(Logger::LogLevel lvl)
     }
 }
 
-void ConsoleLogger::Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line)
+void ConsoleLogger::Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...)
 {
+    // Prepare to handle variadic arguments
+    va_list args;
+    va_start(args, line); // 'line' is the last argument before variadic ones
+
+    // Format the message (parse variadic arguments)
+    std::string formattedMessage = FormatString(message.c_str(), args);
+
     // lock_guard will automatically release the mutex as soon as it is destroyed
     std::lock_guard<std::mutex> guard(lMutex);
 
@@ -52,5 +60,8 @@ void ConsoleLogger::Log(const std::string& message, Logger::LogLevel lvl, const 
     if (file != nullptr)
         std::cout << " [" << file << ":" << line << "]";
 
-    std::cout << " " << message << "\033[0m" << std::endl;
+    // Print the formatted message
+    std::cout << " " << formattedMessage << "\033[0m" << std::endl;
+
+    va_end(args);
 }

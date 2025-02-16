@@ -1,6 +1,7 @@
 #include "FileLogger.h"
 
 #include <string>
+#include <cstdarg>
 
 FileLogger* FileLogger::Instance()
 {
@@ -29,8 +30,15 @@ FileLogger::FileLogger(const std::string& filePath)
 }
 
 
-void FileLogger::Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line)
+void FileLogger::Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...)
 {
+    // Prepare to handle variadic arguments
+    va_list args;
+    va_start(args, line); // 'line' is the last argument before variadic ones
+
+    // Format the message (parse variadic arguments)
+    std::string formattedMessage = FormatString(message.c_str(), args);
+
     std::lock_guard<std::mutex> guard(lMutex);
 
     if (!logFile.is_open())
@@ -51,5 +59,8 @@ void FileLogger::Log(const std::string& message, Logger::LogLevel lvl, const cha
     if (file != nullptr)
         logFile << "[" << file << ":" << line << "] ";
 
-    logFile << message << std::endl;
+    // Write the formatted message
+    logFile << formattedMessage << std::endl;
+
+    va_end(args);
 }

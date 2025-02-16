@@ -20,7 +20,7 @@ public:
 
 	~FileLogger();
 
-	virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line) override;
+	virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
 };
 
 #endif
