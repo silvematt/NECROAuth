@@ -30,7 +30,7 @@ enum SocketAddressesFamily
 //-------------------------------------------------------
 class TCPSocket
 {
-private:
+private: 
 	friend class SocketAddress;
 	sock_t m_socket;
 
@@ -41,8 +41,7 @@ private:
 	NetworkMessage inBuffer;
 	std::queue<NetworkMessage> outQueue;
 
-	bool closed;
-	bool closing;
+	bool closed = false;
 
 public:
 	TCPSocket(SocketAddressesFamily family);
@@ -50,12 +49,22 @@ public:
 
 	~TCPSocket();
 
+	virtual void ReadCallback() {};
+	virtual void SendCallback() {};
+
+	bool						IsOpen();
+
 	int							Bind(const SocketAddress& addr);
 	int							Listen(int backlog = TCP_LISTEN_DEFUALT_BACKLOG);
 	std::shared_ptr<TCPSocket>	Accept(SocketAddress& addr);
 	int							Connect(const SocketAddress& addr);
-	int							Send(const void* inData, int inLen);
-	int							Receive(void* inBuffer, int inLen);
+	
+	void						QueuePacket(NetworkMessage& pckt);
+	int							Send();
+	int							Receive();
+
+	int							Shutdown();
+	int							Close();
 
 	int							SetBlockingEnabled(bool blocking);
 	int							SetSocketOption(int lvl, int optName, const char* optVal, int optLen);

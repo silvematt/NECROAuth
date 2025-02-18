@@ -46,6 +46,9 @@ void NECROAuth::Update()
 	p << std::string("hello") << " " << " world!";
 	p.Print();
 
+	NetworkMessage m(p.Size());
+	m.Write(p.GetContent(), p.Size());
+
 	// Server Loop
 	while (isRunning)
 	{

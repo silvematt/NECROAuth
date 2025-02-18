@@ -1,6 +1,10 @@
 #include "TCPSocket.h"
 #include "SocketUtility.h"
 
+#ifndef _WIN32
+#include <sys/socket.h>
+#endif
+
 #include <iostream>
 #include <string>
 
@@ -9,6 +13,8 @@
 
 TCPSocket::TCPSocket(SocketAddressesFamily family)
 {
+	closed = false;
+
 	m_socket = socket(family, SOCK_STREAM, IPPROTO_TCP);
 
 	if (m_socket == INVALID_SOCKET)
@@ -20,6 +26,8 @@ TCPSocket::TCPSocket(SocketAddressesFamily family)
 
 TCPSocket::TCPSocket(sock_t inSocket)
 {
+	closed = false;
+
 	m_socket = inSocket;
 
 	if (m_socket == INVALID_SOCKET)
@@ -31,7 +39,12 @@ TCPSocket::TCPSocket(sock_t inSocket)
 
 TCPSocket::~TCPSocket()
 {
-	closesocket(m_socket);
+	Close();
+}
+
+bool TCPSocket::IsOpen()
+{
+	return (!closed);
 }
 
 int TCPSocket::Bind(const SocketAddress& addr)
@@ -87,28 +100,67 @@ int TCPSocket::Connect(const SocketAddress& addr)
 	return SOCKET_UTILITY_NO_ERROR;
 }
 
-int TCPSocket::Send(const void* inData, int inLen)
+void TCPSocket::QueuePacket(NetworkMessage& pckt)
 {
-	int bytesSent = send(m_socket, static_cast<const char*>(inData), inLen, 0);
+	outQueue.push(pckt);
+}
+
+int TCPSocket::Send()
+{
+	if (outQueue.empty())
+		return 0;
+
+	NetworkMessage& out = outQueue.front();
+
+	int bytesSent = send(m_socket, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), 0);
 
 	if (bytesSent < 0)
 	{
+		if (SocketUtility::ErrorIsWouldBlock())
+			return 0;
+
+		Shutdown();
+
 		LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(SocketUtility::GetLastError()) + "]");
 		return SocketUtility::GetLastError();
 	}
 
+	// Mark that 'bytesSent' were sent
+	out.ReadCompleted(bytesSent);
+
+	if (out.GetActiveSize() == 0)
+		outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
+	
+	// SendCallback(); needed?
+
 	return bytesSent;
 }
 
-int TCPSocket::Receive(void* inBuffer, int inLen)
+int TCPSocket::Receive()
 {
-	int bytesReceived = recv(m_socket, static_cast<char*>(inBuffer), inLen, 0);
+	if (!IsOpen())
+		return 0;
+
+	inBuffer.CompactData();
+	inBuffer.EnlargeBufferIfNeeded();
+
+	// Manually write on the inBuffer
+	int bytesReceived = recv(m_socket, reinterpret_cast<char*>(inBuffer.GetWritePointer()), inBuffer.GetRemainingSpace(), 0);
 
 	if (bytesReceived < 0)
 	{
+		if (SocketUtility::ErrorIsWouldBlock())
+			return 0;
+		
+		Shutdown();
 		LOG_ERROR(std::string("Error during TCPSocket::Receive() [") + std::to_string(SocketUtility::GetLastError()) + "]");
 		return SocketUtility::GetLastError();
 	}
+
+	// Make sure to update the write pos
+	inBuffer.WriteCompleted(bytesReceived);
+
+	ReadCallback();	// this will handle the data we've received
 
 	return bytesReceived;
 }
@@ -155,9 +207,45 @@ int TCPSocket::SetSocketOption(int lvl, int optName, const char* optVal, int opt
 
 	if (optResult != 0)
 	{
-		LOG_ERROR(std::string("Error during TCPSocket::Receive(" + std::to_string(optName) + ") [") + std::to_string(SocketUtility::GetLastError()) + "]");
+		LOG_ERROR(std::string("Error during TCPSocket::SetSocketOption(" + std::to_string(optName) + ") [") + std::to_string(SocketUtility::GetLastError()) + "]");
 		return SocketUtility::GetLastError();
 	}
 
 	return SOCKET_UTILITY_NO_ERROR;
+}
+
+int TCPSocket::Shutdown()
+{
+	if (closed)
+		return 0;
+	
+	closed = true;
+
+#ifdef _WIN32
+	int result = shutdown(m_socket, SD_SEND);
+
+	if (result < 0)
+		LOG_ERROR("Error while shutting down the socket");
+
+	return result;
+#else
+	int result = shutdown(m_socket, SHUT_WR);
+
+	if (result < 0)
+		LOG_ERROR("Error while shutting down the socket");
+
+	return result;
+#endif
+}
+
+int TCPSocket::Close()
+{
+#ifdef _WIN32
+
+	int result = closesocket(m_socket);
+	return result;
+#else
+	int result = close(m_socket);
+	return result;
+#endif
 }

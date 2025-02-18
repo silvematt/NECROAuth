@@ -28,6 +28,19 @@ public:
 #endif
 	}
 
+	static bool ErrorIsWouldBlock()
+	{
+#ifdef _WIN32
+		if (GetLastError() == WSAEWOULDBLOCK)
+			return true;
+#else
+		if (GetLastError() == EWOULDBLOCK || GetLastError() == EAGAIN) // EAGAIN is often the same as EWOULDBLOCK
+			return true;
+#endif
+
+		return false;
+	}
+
 	//---------------------------------------------------------
 	// Initializes Winsock if on windows, otherwise do nothing.
 	//---------------------------------------------------------

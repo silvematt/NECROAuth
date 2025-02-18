@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 //----------------------------------------------------------------------------------------------------------------
 // Low-level definition of packet, suited for creation and manipulation of packets to then send as NetworkMessages
@@ -35,8 +36,16 @@ public:
         wpos = wpos = 0;
     }
 
-    size_t  Size()  const  { return data.size();   }
-    bool    Empty() const  { return data.empty();  }
+    uint8_t* GetContent()
+    { 
+        if (data.empty())
+            throw std::out_of_range("Trying to GetContent of an empty packet!");
+
+        return data.data(); 
+    }
+
+    size_t  Size()  const   { return data.size();   }
+    bool    Empty() const   { return data.empty();  }
 
 
     // Base append function
