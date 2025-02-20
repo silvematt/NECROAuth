@@ -82,7 +82,11 @@ std::shared_ptr<TCPSocket> TCPSocket::Accept(SocketAddress& addr)
 		return std::make_shared<TCPSocket>(inSocket);
 	else
 	{
-		LOG_ERROR(std::string("Error during TCPSocket::Accept()"));
+		if (!SocketUtility::ErrorIsWouldBlock())
+		{
+			LOG_ERROR(std::string("Error during TCPSocket::Accept()"));
+		}
+
 		return nullptr;
 	}
 }

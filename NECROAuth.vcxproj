@@ -150,6 +150,7 @@
     <ClInclude Include="Packet.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="SocketAddress.h" />
+    <ClInclude Include="TCPSocketManger.h" />
     <ClInclude Include="SocketUtility.h" />
     <ClInclude Include="TCPSocket.h" />
     <ClInclude Include="Utility.h" />

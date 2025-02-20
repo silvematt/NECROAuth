@@ -1,7 +1,7 @@
 #include "NECROAuth.h"
 
 #include "SocketUtility.h"
-#include "TCPSocket.h"
+#include "TCPSocketManger.h"
 #include "Packet.h"
 
 #include <memory>
@@ -25,17 +25,7 @@ void NECROAuth::Update()
 	LOG_OK("NECROAuth is running...");
 
 	// DEBUG: Just a quick test
-	uint16_t inPort = 61531;
-	SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
-	TCPSocket listenerSocket(SocketAddressesFamily::INET);
-
-	int flag = 1;
-	listenerSocket.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
-	listenerSocket.Bind(localAddr);
-
-	listenerSocket.Listen();
-
-	std::shared_ptr<TCPSocket> inSock;
+	TCPSocketManager sockManager(SocketAddressesFamily::INET);
 
 	// @DEBUG just for debugging
 	Packet p;
@@ -52,11 +42,7 @@ void NECROAuth::Update()
 	// Server Loop
 	while (isRunning)
 	{
-		SocketAddress otherAddress;
-		if (inSock = listenerSocket.Accept(otherAddress))
-		{
-			LOG_INFO("Somebody just connected!");
-		}
+		sockManager.Run();
 	}
 
 	Shutdown();

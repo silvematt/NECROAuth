@@ -92,5 +92,8 @@
     <ClInclude Include="AuthCodes.h">
       <Filter>NECROAuth\Authentication</Filter>
     </ClInclude>
+    <ClInclude Include="TCPSocketManger.h">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
