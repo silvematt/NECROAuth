@@ -158,11 +158,13 @@ int TCPSocket::Receive()
 		
 		Shutdown();
 		LOG_ERROR(std::string("Error during TCPSocket::Receive() [") + std::to_string(SocketUtility::GetLastError()) + "]");
-		return SocketUtility::GetLastError();
+		return -1;
 	}
 
 	// Make sure to update the write pos
 	inBuffer.WriteCompleted(bytesReceived);
+
+	LOG_INFO("Received something!");
 
 	ReadCallback();	// this will handle the data we've received
 

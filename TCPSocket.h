@@ -66,6 +66,8 @@ public:
 	int							Shutdown();
 	int							Close();
 
+	sock_t						GetSocketFD() { return m_socket; };
+
 	int							SetBlockingEnabled(bool blocking);
 	int							SetSocketOption(int lvl, int optName, const char* optVal, int optLen);
 };

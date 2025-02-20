@@ -42,7 +42,10 @@ void NECROAuth::Update()
 	// Server Loop
 	while (isRunning)
 	{
-		sockManager.Run();
+		int pollVal = sockManager.Poll();
+
+		if (pollVal == -1)
+			Stop();
 	}
 
 	Shutdown();
