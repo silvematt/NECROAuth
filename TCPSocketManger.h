@@ -132,19 +132,6 @@ public:
 		return 0;
 	}
 
-	// Replace with Poll
-	void Run()
-	{
-		SocketAddress otherAddress;
-		if (std::shared_ptr<TCPSocket> inSock = listener.Accept(otherAddress))
-		{
-			LOG_INFO("Somebody just connected!");
-			list.push_back(inSock);
-		}
-
-		for (int i = 0; i < list.size(); i++)
-			list[i]->Receive();
-	}
 };
 
 #endif

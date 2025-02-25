@@ -164,7 +164,7 @@ int TCPSocket::Receive()
 	// Make sure to update the write pos
 	inBuffer.WriteCompleted(bytesReceived);
 
-	LOG_INFO("Received something!");
+	LOG_INFO("Received %d bytes of something!", bytesReceived);
 
 	ReadCallback();	// this will handle the data we've received
 
