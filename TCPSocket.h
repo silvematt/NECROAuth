@@ -15,6 +15,11 @@ typedef int sock_t;
 #include "SocketAddress.h"
 #include "NetworkMessage.h"
 
+#include "SocketUtility.h"
+#include "ConsoleLogger.h"
+#include "FileLogger.h"
+
+
 #define READ_BLOCK_SIZE 4096
 
 const int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
@@ -56,7 +61,29 @@ public:
 
 	int							Bind(const SocketAddress& addr);
 	int							Listen(int backlog = TCP_LISTEN_DEFUALT_BACKLOG);
-	std::shared_ptr<TCPSocket>	Accept(SocketAddress& addr);
+
+	// Templated Accept
+	template<typename T = TCPSocket>
+	std::shared_ptr<T> Accept(SocketAddress& addr)
+	{
+		static_assert(std::is_base_of<TCPSocket, T>::value || std::is_same<TCPSocket, T>::value,
+			"T must be TCPSocket or derived from it");
+
+		int addrLen = addr.GetSize();
+		sock_t inSocket = accept(m_socket, &addr.m_addr, &addrLen);
+
+		if (inSocket != INVALID_SOCKET)
+			return std::make_shared<T>(inSocket); // Assumes T has a constructor taking sock_t
+		else
+		{
+			if (!SocketUtility::ErrorIsWouldBlock())
+			{
+				LOG_ERROR(std::string("Error during TCPSocket::Accept()"));
+			}
+			return nullptr;
+		}
+	}
+
 	int							Connect(const SocketAddress& addr);
 	
 	void						QueuePacket(NetworkMessage& pckt);

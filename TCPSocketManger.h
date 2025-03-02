@@ -1,7 +1,7 @@
 #ifndef TCP_SOCKET_MANAGER
 #define TCP_SOCEKT_MANAGER
 
-#include "TCPSocket.h"
+#include "AuthSession.h"
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -16,7 +16,7 @@ protected:
 	TCPSocket listener;
 
 	// Connections container
-	std::vector<std::shared_ptr<TCPSocket>> list;
+	std::vector<std::shared_ptr<AuthSession>> list;
 
 	std::vector<pollfd> poll_fds;
 
@@ -75,7 +75,7 @@ public:
 			else if (poll_fds[0].revents & POLLIN)
 			{
 				SocketAddress otherAddr;
-				if (std::shared_ptr<TCPSocket> inSock = listener.Accept(otherAddr))
+				if (std::shared_ptr<AuthSession> inSock = listener.Accept<AuthSession>(otherAddr))
 				{
 					LOG_INFO("New connection!");
 					list.push_back(inSock); // save it in the active list

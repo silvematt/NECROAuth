@@ -73,24 +73,6 @@ int TCPSocket::Listen(int backlog)
 	return SOCKET_UTILITY_NO_ERROR;
 }
 
-std::shared_ptr<TCPSocket> TCPSocket::Accept(SocketAddress& addr)
-{
-	int addrLen = addr.GetSize();
-	sock_t inSocket = accept(m_socket, &addr.m_addr, &addrLen);
-
-	if (inSocket != INVALID_SOCKET)
-		return std::make_shared<TCPSocket>(inSocket);
-	else
-	{
-		if (!SocketUtility::ErrorIsWouldBlock())
-		{
-			LOG_ERROR(std::string("Error during TCPSocket::Accept()"));
-		}
-
-		return nullptr;
-	}
-}
-
 int TCPSocket::Connect(const SocketAddress& addr)
 {
 	int err = connect(m_socket, &addr.m_addr, addr.GetSize());
