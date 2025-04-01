@@ -66,14 +66,15 @@ public:
 	template<typename T = TCPSocket>
 	std::shared_ptr<T> Accept(SocketAddress& addr)
 	{
-		static_assert(std::is_base_of<TCPSocket, T>::value || std::is_same<TCPSocket, T>::value,
-			"T must be TCPSocket or derived from it");
+		static_assert(std::is_base_of<TCPSocket, T>::value || std::is_same<TCPSocket, T>::value, "T must be TCPSocket or derived from it");
 
 		int addrLen = addr.GetSize();
 		sock_t inSocket = accept(m_socket, &addr.m_addr, &addrLen);
 
 		if (inSocket != INVALID_SOCKET)
+		{
 			return std::make_shared<T>(inSocket); // Assumes T has a constructor taking sock_t
+		}
 		else
 		{
 			if (!SocketUtility::ErrorIsWouldBlock())
