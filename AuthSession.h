@@ -39,6 +39,9 @@ public:
     static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 
     void ReadCallback() override;
+
+    // Handlers functions
+    bool HandleAuthLoginGatherInfoPacket();
 };
 
 #endif
