@@ -7,7 +7,13 @@
 
 #pragma pack(push, 1)
 
-struct PacketAuthLoginGatherInfo
+// -------------------------------------------------------------------------------------------------------
+// When defining packets: 
+// 1) S prefix means (for)Server, so it's a packet that the server will receive and the client will send
+// 2) C prefix means (for)Client, so it's a packet that the client will receive and the server will send
+// -------------------------------------------------------------------------------------------------------
+
+struct SPacketAuthLoginGatherInfo
 {
     uint8_t		id;
     uint8_t		error;
@@ -20,20 +26,21 @@ struct PacketAuthLoginGatherInfo
     uint8_t		usernameSize;
     uint8_t		username[1];
 };
-static_assert(sizeof(PacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 1), "PacketAuthLoginGatherInfo size assert failed!");
+static_assert(sizeof(SPacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 1), "SPacketAuthLoginGatherInfo size assert failed!");
 #define	MAX_USERNAME_LENGTH 16-1 // 1 is already in packet username[1] 
-#define MAX_ACCEPTED_GATHER_INFO_SIZE (sizeof(PacketAuthLoginGatherInfo) + MAX_USERNAME_LENGTH) // 16 is username length
-#define PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+#define S_MAX_ACCEPTED_GATHER_INFO_SIZE (sizeof(SPacketAuthLoginGatherInfo) + MAX_USERNAME_LENGTH) // 16 is username length
+#define S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
-struct PacketAuthLoginGatherInfoResponse
+
+struct CPacketAuthLoginGatherInfo
 {
     uint8_t		id;
     uint8_t		error;
     uint16_t	size;
 };
-static_assert(sizeof(PacketAuthLoginGatherInfoResponse) == (1 + 1 + 2), "PacketAuthLoginGatherInfoResponse size assert failed!");
-#define MAX_ACCEPTED_GATHER_INFO_RESPONSE_SIZE (sizeof(PacketAuthLoginGatherInfoResponse)) // 16 is username length
-#define PACKET_AUTH_LOGIN_GATHER_INFO_RESPONSE_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+static_assert(sizeof(CPacketAuthLoginGatherInfo) == (1 + 1 + 2), "CPacketAuthLoginGatherInfo size assert failed!");
+#define C_MAX_ACCEPTED_C_GATHER_INFO_RESPONSE_SIZE (sizeof(PacketAuthLoginGatherInfoResponse))
+#define C_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 
 
@@ -44,7 +51,7 @@ std::unordered_map<uint8_t, AuthHandler> AuthSession::InitHandlers()
 {
 	std::unordered_map<uint8_t, AuthHandler> handlers;
 
-    handlers[PCKTID_AUTH_LOGIN_GATHER_INFO] = { AuthStatus::STATUS_GATHER_INFO, PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket};
+    handlers[PCKTID_AUTH_LOGIN_GATHER_INFO] = { AuthStatus::STATUS_GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket};
 
 	return handlers;
 }
@@ -85,11 +92,11 @@ void AuthSession::ReadCallback()
         // If it's a variable-sized packet, we need to ensure size
         if (cmd == PCKTID_AUTH_LOGIN_GATHER_INFO)
         {
-            PacketAuthLoginGatherInfo* pcktData = reinterpret_cast<PacketAuthLoginGatherInfo*>(packet.GetReadPointer());
+            SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(packet.GetReadPointer());
             size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
 
             // Check for size
-            if (size > MAX_ACCEPTED_GATHER_INFO_SIZE)
+            if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
             {
                 Shutdown();
                 Close();
@@ -114,7 +121,7 @@ void AuthSession::ReadCallback()
 
 bool AuthSession::HandleAuthLoginGatherInfoPacket()
 {
-    PacketAuthLoginGatherInfo* pcktData = reinterpret_cast<PacketAuthLoginGatherInfo*>(inBuffer.GetReadPointer());
+    SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(inBuffer.GetReadPointer());
 
     std::string login((char const*)pcktData->username, pcktData->usernameSize);
 
@@ -142,7 +149,7 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
         username = login;
     }
 
-    packet << uint16_t(sizeof(PacketAuthLoginGatherInfoResponse) - PACKET_AUTH_LOGIN_GATHER_INFO_RESPONSE_INITIAL_SIZE);
+    packet << uint16_t(sizeof(CPacketAuthLoginGatherInfo) - C_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE);
 
     NetworkMessage m(packet);
     QueuePacket(m);
