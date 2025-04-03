@@ -54,6 +54,7 @@ public:
 
 	~TCPSocket();
 
+	virtual void OnConnectedCallback() {};
 	virtual void ReadCallback() {};
 	virtual void SendCallback() {};
 
