@@ -1,7 +1,7 @@
 #include "NECROAuth.h"
 
 #include "SocketUtility.h"
-#include "TCPSocketManger.h"
+#include "TCPSocketManager.h"
 #include "Packet.h"
 
 #include <memory>

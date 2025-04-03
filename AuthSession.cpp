@@ -3,6 +3,8 @@
 #include "FileLogger.h"
 #include "AuthCodes.h"
 
+#include "TCPSocketManager.h"
+
 #pragma pack(push, 1)
 
 struct PacketAuthLoginGatherInfo
@@ -22,6 +24,17 @@ static_assert(sizeof(PacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 
 #define	MAX_USERNAME_LENGTH 16-1 // 1 is already in packet username[1] 
 #define MAX_ACCEPTED_GATHER_INFO_SIZE (sizeof(PacketAuthLoginGatherInfo) + MAX_USERNAME_LENGTH) // 16 is username length
 #define PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+
+struct PacketAuthLoginGatherInfoResponse
+{
+    uint8_t		id;
+    uint8_t		error;
+    uint16_t	size;
+};
+static_assert(sizeof(PacketAuthLoginGatherInfoResponse) == (1 + 1 + 2), "PacketAuthLoginGatherInfoResponse size assert failed!");
+#define MAX_ACCEPTED_GATHER_INFO_RESPONSE_SIZE (sizeof(PacketAuthLoginGatherInfoResponse)) // 16 is username length
+#define PACKET_AUTH_LOGIN_GATHER_INFO_RESPONSE_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+
 
 
 #pragma pack(pop)
@@ -104,7 +117,29 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     PacketAuthLoginGatherInfo* pcktData = reinterpret_cast<PacketAuthLoginGatherInfo*>(inBuffer.GetReadPointer());
 
     std::string login((char const*)pcktData->username, pcktData->usernameSize);
-    LOG_OK("Handling packet! " + login);
+
+    LOG_OK("Handling AuthLoginInfo for user:" + login);
+
+    // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
+    // Just check if the username is active 
+    bool usernameInUse = TCPSocketManager::UsernameIsActive(login);
+
+    // Reply to the client
+    Packet packet;
+
+    packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_GATHER_INFO);
+    
+    if (usernameInUse)
+        packet << uint8_t(AuthResults::AUTH_FAILED_USERNAME_IN_USE);
+    else
+        packet << uint8_t(AuthResults::AUTH_SUCCESS);
+
+    packet << uint16_t(sizeof(PacketAuthLoginGatherInfoResponse) - PACKET_AUTH_LOGIN_GATHER_INFO_RESPONSE_INITIAL_SIZE);
+
+    NetworkMessage m(packet);
+    QueuePacket(m);
+
+    Send();
 
     return true;
 }

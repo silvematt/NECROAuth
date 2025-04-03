@@ -54,6 +54,9 @@
     <ClCompile Include="Packet.cpp">
       <Filter>NECROAuth\Packets</Filter>
     </ClCompile>
+    <ClCompile Include="TCPSocketManager.cpp">
+      <Filter>NECROAuth\Socket</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NECROAuth.h">
@@ -92,7 +95,7 @@
     <ClInclude Include="AuthCodes.h">
       <Filter>NECROAuth\Authentication</Filter>
     </ClInclude>
-    <ClInclude Include="TCPSocketManger.h">
+    <ClInclude Include="TCPSocketManager.h">
       <Filter>NECROAuth\Socket</Filter>
     </ClInclude>
   </ItemGroup>
