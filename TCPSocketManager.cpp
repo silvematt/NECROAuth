@@ -112,6 +112,7 @@ int TCPSocketManager::Poll()
 			LOG_INFO("Removing %d", idx);
 
 			list[idx - 1]->Close();
+			usernameMap.erase(list[idx - 1]->username);
 
 			poll_fds.erase(poll_fds.begin() + idx);
 			list.erase(list.begin() + (idx - 1));
@@ -130,4 +131,9 @@ bool TCPSocketManager::UsernameIsActive(const std::string& s)
 	}
 
 	return true;
+}
+
+void TCPSocketManager::RegisterUsername(const std::string& user, AuthSession* session)
+{
+	usernameMap[user] = session;
 }

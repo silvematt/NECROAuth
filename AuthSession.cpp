@@ -130,9 +130,17 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_GATHER_INFO);
     
     if (usernameInUse)
+    {
+        LOG_INFO("User tried to login with an username already in use.");
         packet << uint8_t(AuthResults::AUTH_FAILED_USERNAME_IN_USE);
+    }
     else
+    {
         packet << uint8_t(AuthResults::AUTH_SUCCESS);
+        
+        TCPSocketManager::RegisterUsername(login, this);
+        username = login;
+    }
 
     packet << uint16_t(sizeof(PacketAuthLoginGatherInfoResponse) - PACKET_AUTH_LOGIN_GATHER_INFO_RESPONSE_INITIAL_SIZE);
 

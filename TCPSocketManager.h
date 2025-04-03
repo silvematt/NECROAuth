@@ -32,6 +32,7 @@ protected:
 public:
 	int Poll();
 
+	static void RegisterUsername(const std::string& user, AuthSession* session);
 	static bool UsernameIsActive(const std::string& s);
 };
 

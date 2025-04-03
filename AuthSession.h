@@ -34,6 +34,7 @@ class AuthSession : public TCPSocket
 public:
     AuthSession(sock_t socket) : TCPSocket(socket), status(STATUS_GATHER_INFO) {}
 
+    std::string username; // TODO change this
     AuthStatus status;
 
     static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
