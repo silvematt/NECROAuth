@@ -16,6 +16,9 @@ int NECROAuth::Init()
 
 	SocketUtility::Initialize();
 
+	// Make TCPSocketManager
+	sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
+
 	return 0;
 }
 
@@ -24,24 +27,10 @@ void NECROAuth::Update()
 	isRunning = true;
 	LOG_OK("NECROAuth is running...");
 
-	// DEBUG: Just a quick test
-	TCPSocketManager sockManager(SocketAddressesFamily::INET);
-
-	// @DEBUG just for debugging
-	Packet p;
-	p.Print();
-	uint8_t uint = 1;
-	p.Append(&uint, sizeof(uint8_t));
-	p.Print();
-	p << std::string("hello") << " " << " world!";
-	p.Print();
-
-	NetworkMessage m(p);
-
 	// Server Loop
 	while (isRunning)
 	{
-		int pollVal = sockManager.Poll();
+		int pollVal = sockManager->Poll();
 
 		if (pollVal == -1)
 			Stop();

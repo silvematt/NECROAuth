@@ -1,5 +1,5 @@
 #ifndef TCP_SOCKET_MANAGER
-#define TCP_SOCEKT_MANAGER
+#define TCP_SOCKET_MANAGER
 
 #include "AuthSession.h"
 
@@ -13,6 +13,10 @@
 //-----------------------------------------------------------------------------------------------------
 class TCPSocketManager
 {
+public:
+	// Construct the socket manager
+	TCPSocketManager(SocketAddressesFamily _family);
+
 protected:
 	// Underlying listener socket
 	TCPSocket listener;
@@ -26,13 +30,9 @@ protected:
 	static std::unordered_map<std::string, AuthSession*> usernameMap;
 
 public:
-	// Construct the socket manager
-	TCPSocketManager(SocketAddressesFamily _family);
-
 	int Poll();
 
 	static bool UsernameIsActive(const std::string& s);
-
 };
 
 #endif

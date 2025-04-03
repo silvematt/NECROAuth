@@ -1,10 +1,6 @@
 #include "TCPSocketManager.h"
 
-#ifndef TCP_SOCKET_MANAGER
-#define TCP_SOCEKT_MANAGER
-
 #include "AuthSession.h"
-
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 
@@ -135,5 +131,3 @@ bool TCPSocketManager::UsernameIsActive(const std::string& s)
 
 	return true;
 }
-
-#endif
