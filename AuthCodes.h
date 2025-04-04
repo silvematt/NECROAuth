@@ -26,4 +26,10 @@ enum AuthResults
 };
 
 
+enum LoginProofResults
+{
+	LOGIN_SUCCESS		= 0x00,
+	LOGIN_FAILED		= 0X01
+};
+
 #endif

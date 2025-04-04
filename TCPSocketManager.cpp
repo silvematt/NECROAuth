@@ -67,6 +67,9 @@ int TCPSocketManager::Poll()
 			if (std::shared_ptr<AuthSession> inSock = listener.Accept<AuthSession>(otherAddr))
 			{
 				LOG_INFO("New connection!");
+
+				// Initialize status
+				inSock->status = AuthStatus::STATUS_GATHER_INFO;
 				list.push_back(inSock); // save it in the active list
 
 				// Add the new connection to the pfds
@@ -112,7 +115,7 @@ int TCPSocketManager::Poll()
 			LOG_INFO("Removing %d", idx);
 
 			list[idx - 1]->Close();
-			usernameMap.erase(list[idx - 1]->username);
+			usernameMap.erase(list[idx - 1]->GetAccountData().username);
 
 			poll_fds.erase(poll_fds.begin() + idx);
 			list.erase(list.begin() + (idx - 1));

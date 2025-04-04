@@ -3,6 +3,9 @@
 
 #include "TCPSocket.h"
 #include <unordered_map>
+#include <array>
+
+#define TEMP_AUTH_SESSION_KEY_LENGTH 40 // for developing, we're avoiding cyptography, we'll just have a session key client and server can synch to
 
 // Status of the current socket
 enum AuthStatus
@@ -25,24 +28,38 @@ struct AuthHandler
 
 #pragma pack(pop)
 
+struct AccountData
+{
+    std::string username;
+    std::array<uint8_t, TEMP_AUTH_SESSION_KEY_LENGTH> sessionKey;
+};
+
 //----------------------------------------------------------------------------------------------------
 // AuthSession is the extension of the base TCPSocket class, that defines the methods and
 // functionality that defines the exchange of messages with the connected client on the other end
 //----------------------------------------------------------------------------------------------------
 class AuthSession : public TCPSocket
 {
+private:
+    AccountData data;
+
 public:
     AuthSession(sock_t socket) : TCPSocket(socket), status(STATUS_GATHER_INFO) {}
-
-    std::string username; // TODO change this
     AuthStatus status;
 
     static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
+
+    AccountData& GetAccountData()
+    {
+        return data;
+    }
 
     void ReadCallback() override;
 
     // Handlers functions
     bool HandleAuthLoginGatherInfoPacket();
+    bool HandleAuthLoginProofPacket();
+
 };
 
 #endif
