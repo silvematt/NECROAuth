@@ -28,6 +28,9 @@
     <Filter Include="NECROAuth\Packets">
       <UniqueIdentifier>{73ee9194-45ee-4bae-a763-31be214a853f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NECROAuth\OpenSSL">
+      <UniqueIdentifier>{682624a9-65df-427c-b92d-89f24dcce74a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -56,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="TCPSocketManager.cpp">
       <Filter>NECROAuth\Socket</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenSSLManager.cpp">
+      <Filter>NECROAuth\OpenSSL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -97,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="TCPSocketManager.h">
       <Filter>NECROAuth\Socket</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenSSLManager.h">
+      <Filter>NECROAuth\OpenSSL</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

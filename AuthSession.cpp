@@ -223,14 +223,14 @@ bool AuthSession::HandleAuthLoginProofPacket()
         std::mt19937 gen(rd());
         std::uniform_int_distribution<> distr(0, 255);
 
-        for (int i = 0; i < 40; i++)
+        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; i++)
         {
             data.sessionKey[i] = uint8_t(distr(gen));
         }
 
         // Convert sessionKey to hex string in order to print it
         std::ostringstream sessionStrStream;
-        for (int i = 0; i < 40; ++i)
+        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; ++i)
         {
             sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
         }
@@ -239,7 +239,7 @@ bool AuthSession::HandleAuthLoginProofPacket()
         LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
 
         // Write session key to packet
-        for (int i = 0; i < 40; ++i)
+        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; ++i)
         {
             packet << data.sessionKey[i];
         }

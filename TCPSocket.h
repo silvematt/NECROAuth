@@ -12,6 +12,8 @@ typedef int sock_t;
 #include <cstdint>
 #include <queue>
 
+#include <openssl/ssl.h>
+
 #include "SocketAddress.h"
 #include "NetworkMessage.h"
 
@@ -47,6 +49,11 @@ protected:
 	std::queue<NetworkMessage> outQueue;
 
 	bool closed = false;
+
+	// OpenSSL support
+	bool usesTLS = false;
+	SSL* ssl;
+	BIO* bio;
 
 public:
 	TCPSocket(SocketAddressesFamily family);
@@ -99,6 +106,12 @@ public:
 
 	int							SetBlockingEnabled(bool blocking);
 	int							SetSocketOption(int lvl, int optName, const char* optVal, int optLen);
+
+	SSL*						GetSSL() {return ssl;}
+
+	// OpenSSL
+	void TLSSetup(const char* hostname);
+	void TLSPerformHandshake();
 };
 
 #endif

@@ -107,11 +107,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Program Files\OpenSSL-Win64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Ws2_32.lib;libssl.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -137,6 +139,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NECROAuth.cpp" />
+    <ClCompile Include="OpenSSLManager.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
     <ClCompile Include="TCPSocketManager.cpp" />
@@ -148,6 +151,7 @@
     <ClInclude Include="FileLogger.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="NECROAuth.h" />
+    <ClInclude Include="OpenSSLManager.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="NetworkMessage.h" />
     <ClInclude Include="SocketAddress.h" />

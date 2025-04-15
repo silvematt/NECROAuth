@@ -66,18 +66,64 @@ int TCPSocketManager::Poll()
 			SocketAddress otherAddr;
 			if (std::shared_ptr<AuthSession> inSock = listener.Accept<AuthSession>(otherAddr))
 			{
-				LOG_INFO("New connection!");
+				LOG_INFO("New connection! Setting up TLS and handshaking...");
 
-				// Initialize status
-				inSock->status = AuthStatus::STATUS_GATHER_INFO;
-				list.push_back(inSock); // save it in the active list
+				inSock->TLSSetup("localhost");
 
-				// Add the new connection to the pfds
-				pollfd newPfd;
-				newPfd.fd = inSock->GetSocketFD();
-				newPfd.events = POLLIN;
-				newPfd.revents = 0;
-				poll_fds.push_back(newPfd);
+				bool success = true;
+				int ret = 0;
+				// Perform the handshake
+				while ((ret = SSL_accept(inSock->GetSSL())) != 1)
+				{
+					int err = SSL_get_error(inSock->GetSSL(), ret);
+
+					// Keep trying
+					if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+						continue;
+
+					if (err == SSL_ERROR_WANT_CONNECT || err == SSL_ERROR_WANT_ACCEPT)
+						continue;
+
+					if (err == SSL_ERROR_ZERO_RETURN) 
+					{
+						LOG_INFO("TLS connection closed by peer during handshake.");
+						success = false;
+						break;
+					}
+
+					if (err == SSL_ERROR_SYSCALL) 
+					{
+						LOG_ERROR("System call error during TLS handshake. Ret: %d.", ret);
+						success = false;
+						break;
+					}
+					
+					if (err == SSL_ERROR_SSL)
+					{
+						if (SSL_get_verify_result(inSock->GetSSL()) != X509_V_OK)
+							LOG_ERROR("Verify error: %s\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL())));
+					}
+
+					LOG_ERROR("TLSPerformHandshake failed!");
+					success = false;
+					break;
+				}
+
+				if (success)
+				{
+					LOG_OK("TLSPerformHandshake succeeded!");
+
+					// Initialize status
+					inSock->status = AuthStatus::STATUS_GATHER_INFO;
+					list.push_back(inSock); // save it in the active list
+
+					// Add the new connection to the pfds
+					pollfd newPfd;
+					newPfd.fd = inSock->GetSocketFD();
+					newPfd.events = POLLIN;
+					newPfd.revents = 0;
+					poll_fds.push_back(newPfd);
+				}
 			}
 		}
 	}
