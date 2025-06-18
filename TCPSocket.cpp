@@ -168,7 +168,7 @@ int TCPSocket::Receive()
 
 	// Manually write on the inBuffer
 	int bytesReceived = 0;
-	size_t sslBytesReceived;
+	size_t sslBytesReceived = 0;
 	if (!usesTLS)
 	{
 		bytesReceived = recv(m_socket, reinterpret_cast<char*>(inBuffer.GetWritePointer()), inBuffer.GetRemainingSpace(), 0);

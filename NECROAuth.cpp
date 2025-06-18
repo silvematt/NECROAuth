@@ -43,11 +43,15 @@ int NECROAuth::Init()
 	return 0;
 }
 
-void NECROAuth::Update()
+void NECROAuth::Start()
 {
 	isRunning = true;
-	LOG_OK("NECROAuth is running...");
 
+	LOG_OK("NECROAuth is running...");
+}
+
+void NECROAuth::Update()
+{
 	// Server Loop
 	while (isRunning)
 	{

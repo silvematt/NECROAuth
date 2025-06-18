@@ -6,6 +6,8 @@ int main()
 {
 	if (server.Init() == 0)
 	{
+		server.Start();
+
 		server.Update();
 	}
 

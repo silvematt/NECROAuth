@@ -38,7 +38,7 @@ public:
 			return 1;
 		}
 
-		if (!SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION)) 
+		if (!SSL_CTX_set_min_proto_version(ctx, TLS1_3_VERSION)) 
 		{
 			SSL_CTX_free(ctx);
 			LOG_ERROR("OpenSSLManager: failed to set the minimum TLS protocol version.");

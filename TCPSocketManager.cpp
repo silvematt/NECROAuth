@@ -34,7 +34,7 @@ TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : listener(_fa
 
 int TCPSocketManager::Poll()
 {
-	static int timeout = -1;
+	static int timeout = -1;	// wait forever until at least one socket has an event
 
 	LOG_INFO("Polling %d", list.size());
 	int res = WSAPoll(poll_fds.data(), poll_fds.size(), timeout);

@@ -32,6 +32,7 @@ public:
 	TCPSocketManager& GetSocketManager();
 
 	int						Init();
+	void					Start();
 	void					Update();
 	void					Stop();
 	int						Shutdown();
