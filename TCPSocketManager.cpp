@@ -123,6 +123,9 @@ int TCPSocketManager::Poll()
 					newPfd.events = POLLIN;
 					newPfd.revents = 0;
 					poll_fds.push_back(newPfd);
+
+					// Set inSock PFD pointer with the one we've just created and put in the vector
+					inSock->SetPfd(&poll_fds[poll_fds.size()-1]);
 				}
 			}
 		}
@@ -139,15 +142,33 @@ int TCPSocketManager::Poll()
 			LOG_INFO("Client socket error/disconnection detected. Removing it later.");
 			toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
 		}
-		else if (poll_fds[i].revents & POLLIN)
+		else 
 		{
-			int r = list[i - 1]->Receive();
-
-			// If receive failed, 
-			if (r == -1)
+			// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
+			if (poll_fds[i].revents & POLLOUT)
 			{
-				LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-				toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+				int r = list[i - 1]->Send();
+
+				// If send failed
+				if (r < 0)
+				{
+					LOG_INFO("Client socket error/disconnection detected. Removing it later.");
+					toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+					continue;
+				}
+			}
+
+			if (poll_fds[i].revents & POLLIN)
+			{
+				int r = list[i - 1]->Receive();
+
+				// If receive failed, 
+				if (r < 0)
+				{
+					LOG_INFO("Client socket error/disconnection detected. Removing it later.");
+					toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+					continue;
+				}
 			}
 		}
 	}

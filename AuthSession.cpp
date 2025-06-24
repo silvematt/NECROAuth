@@ -189,7 +189,7 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     NetworkMessage m(packet);
     QueuePacket(m);
 
-    Send();
+    //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
 
     return true;
 }
@@ -248,7 +248,7 @@ bool AuthSession::HandleAuthLoginProofPacket()
     NetworkMessage m(packet);
     QueuePacket(m);
 
-    Send();
+    //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
 
     return true;
 }

@@ -55,6 +55,12 @@ protected:
 	SSL* ssl;
 	BIO* bio;
 
+	// Used for dynamic POLLIN | POLLOUT behavior, save the pfd and we'll update the events to look for in base of the content of the outQueue
+	// If the outqueue is empty, only poll for POLLIN events, otherwise, also POLLOUT events
+	// This is better than the callback Send() approach because even if a Send fails because the socket was not writable at the time of the callback, we'll still try to send the packets later
+	pollfd* pfd;
+
+
 public:
 	TCPSocket(SocketAddressesFamily family);
 	TCPSocket(sock_t inSocket);
@@ -98,6 +104,16 @@ public:
 	void						QueuePacket(NetworkMessage& pckt);
 	int							Send();
 	int							Receive();
+
+	void SetPfd(pollfd* fd)
+	{
+		pfd = fd;
+	}
+
+	bool HasPendingData() const
+	{
+		return !outQueue.empty();
+	}
 
 	int							Shutdown();
 	int							Close();
