@@ -145,6 +145,7 @@
     <ClCompile Include="TCPSocketManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AES.h" />
     <ClInclude Include="AuthCodes.h" />
     <ClInclude Include="AuthSession.h" />
     <ClInclude Include="ConsoleLogger.h" />

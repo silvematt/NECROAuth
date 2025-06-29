@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <array>
 
-#define TEMP_AUTH_SESSION_KEY_LENGTH 40 // for developing, we're avoiding cyptography, we'll just have a session key client and server can synch to
+#include "AES.h"
 
 // Status of the current socket
 enum AuthStatus
@@ -31,7 +31,7 @@ struct AuthHandler
 struct AccountData
 {
     std::string username;
-    std::array<uint8_t, TEMP_AUTH_SESSION_KEY_LENGTH> sessionKey;
+    std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
 };
 
 //----------------------------------------------------------------------------------------------------

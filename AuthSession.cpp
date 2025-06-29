@@ -59,9 +59,9 @@ struct CPacketAuthLoginProof
     uint8_t		error;
     uint16_t    size;
 
-    uint8_t     sessionKey[TEMP_AUTH_SESSION_KEY_LENGTH];
+    uint8_t     sessionKey[AES_128_KEY_SIZE];
 };
-static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + TEMP_AUTH_SESSION_KEY_LENGTH), "CPacketAuthLoginProof size assert failed!");
+static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + AES_128_KEY_SIZE), "CPacketAuthLoginProof size assert failed!");
 #define C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 
@@ -210,7 +210,7 @@ bool AuthSession::HandleAuthLoginProofPacket()
         LOG_INFO("User tried to send proof with a wrong key.");
         packet << uint8_t(LoginProofResults::LOGIN_FAILED);
 
-        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - TEMP_AUTH_SESSION_KEY_LENGTH); // Adjust the size appropriately
+        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }
     else
     {
@@ -219,18 +219,12 @@ bool AuthSession::HandleAuthLoginProofPacket()
         packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
         // Calculate a random session key
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> distr(0, 255);
-
-        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; i++)
-        {
-            data.sessionKey[i] = uint8_t(distr(gen));
-        }
+        data.sessionKey = NECROAES::GenerateSessionKey();
+        
 
         // Convert sessionKey to hex string in order to print it
         std::ostringstream sessionStrStream;
-        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; ++i)
+        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
         {
             sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
         }
@@ -239,7 +233,7 @@ bool AuthSession::HandleAuthLoginProofPacket()
         LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
 
         // Write session key to packet
-        for (int i = 0; i < TEMP_AUTH_SESSION_KEY_LENGTH; ++i)
+        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
         {
             packet << data.sessionKey[i];
         }
