@@ -47,9 +47,9 @@ struct SPacketAuthLoginProof
     uint8_t		id;
     uint8_t		error;
 
-    uint8_t     key; // key needs to be 242 in order to succeed login
+    uint32_t    clientsIVRandomPrefix;
 };
-static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
+static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 4), "SPacketAuthLoginProof size assert failed!");
 
 
 // Login Proof doesn't exist for now, this is just a dull packet
@@ -205,38 +205,46 @@ bool AuthSession::HandleAuthLoginProofPacket()
 
     packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_ATTEMPT);
 
-    if (pcktData->key != 242)
+    /*
+    if (pcktData->key != 242) old dull check, here as an example of sending an error message
     {
         LOG_INFO("User tried to send proof with a wrong key.");
         packet << uint8_t(LoginProofResults::LOGIN_FAILED);
 
         packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }
-    else
-    {
-        packet << uint8_t(LoginProofResults::LOGIN_SUCCESS);
+    */
 
-        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
+    packet << uint8_t(LoginProofResults::LOGIN_SUCCESS);
 
-        // Calculate a random session key
-        data.sessionKey = NECROAES::GenerateSessionKey();
+    packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
+
+    // Calculate this side's IV, making sure it's different from the client's
+    while(pcktData->clientsIVRandomPrefix == data.iv.prefix)
+        data.iv.RandomizePrefix();
+
+    data.iv.ResetCounter();
+
+    LOG_INFO("Client's IV Random Prefix: " + std::to_string(pcktData->clientsIVRandomPrefix) + " | Server's IV Random Prefix: " + std::to_string(data.iv.prefix));
+
+    // Calculate a random session key
+    data.sessionKey = NECROAES::GenerateSessionKey();
         
 
-        // Convert sessionKey to hex string in order to print it
-        std::ostringstream sessionStrStream;
-        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
-        {
-            sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
-        }
-        std::string sessionStr = sessionStrStream.str();
+    // Convert sessionKey to hex string in order to print it
+    std::ostringstream sessionStrStream;
+    for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+    {
+        sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
+    }
+    std::string sessionStr = sessionStrStream.str();
 
-        LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
+    LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
 
-        // Write session key to packet
-        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
-        {
-            packet << data.sessionKey[i];
-        }
+    // Write session key to packet
+    for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+    {
+        packet << data.sessionKey[i];
     }
 
     NetworkMessage m(packet);
