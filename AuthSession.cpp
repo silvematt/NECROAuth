@@ -187,6 +187,13 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     }
 
     NetworkMessage m(packet);
+
+    /* Encryption example
+    int res = m.AESEncrypt(data.sessionKey.data(), data.iv, nullptr, 0);
+    if (res < 0)
+        return false;
+    */
+
     QueuePacket(m);
 
     //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
