@@ -160,11 +160,19 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     Packet packet;
 
     packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_GATHER_INFO);
-    
-    if (usernameInUse)
+
+    // Check the DB, see if user exists
+    LoginDatabase& db = server.GetDirectDB();
+    mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
+    s.bind(login);
+    mysqlx::SqlResult result = db.Execute(s);
+
+    mysqlx::Row row = result.fetchOne();
+
+    if (!row)
     {
-        LOG_INFO("User tried to login with an username already in use.");
-        packet << uint8_t(AuthResults::AUTH_FAILED_USERNAME_IN_USE);
+        LOG_INFO("User tried to login with an username that doesn't exist.");
+        packet << uint8_t(AuthResults::AUTH_FAILED_UNKNOWN_ACCOUNT);
     }
     else
     {

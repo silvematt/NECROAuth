@@ -37,6 +37,9 @@ int NECROAuth::Init()
 	if (OpenSSLManager::Init() != 0)
 		return -1;
 
+	if (directdb.Init() != 0)
+		return -2;
+
 	// Make TCPSocketManager
 	sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
 

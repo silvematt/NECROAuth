@@ -5,6 +5,8 @@
 #include "FileLogger.h"
 #include "TCPSocketManager.h"
 
+#include "LoginDatabase.h"
+
 constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
 constexpr uint8_t CLIENT_VERSION_MINOR = 0;
 constexpr uint8_t CLIENT_VERSION_REVISION = 0;
@@ -26,10 +28,16 @@ private:
 	FileLogger fLogger;
 	std::unique_ptr<TCPSocketManager> sockManager;
 
+	// directdb will be used for queries that run (and block) on the main thread
+	// to use only with data-critical code, for example, while making a response packet where an information in the database is needed to go further
+	// for "fire-and-forget" operations like updating logs, fields, etc we can use the DBWorkerThread
+	LoginDatabase directdb; 
+
 public:
 	ConsoleLogger& GetConsoleLogger();
 	FileLogger& GetFileLogger();
 	TCPSocketManager& GetSocketManager();
+	LoginDatabase& GetDirectDB();
 
 	int						Init();
 	void					Start();
@@ -55,6 +63,11 @@ inline FileLogger& NECROAuth::GetFileLogger()
 inline TCPSocketManager& NECROAuth::GetSocketManager()
 {
 	return *sockManager.get();
+}
+
+inline LoginDatabase& NECROAuth::GetDirectDB()
+{
+	return directdb;
 }
 
 #endif
