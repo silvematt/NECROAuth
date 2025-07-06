@@ -270,9 +270,16 @@ bool AuthSession::HandleAuthLoginProofPacket()
     if (!authenticated)
     {
         LOG_INFO("User " + this->GetRemoteAddressAndPort() + " tried to send proof with a wrong password.");
-        packet << uint8_t(LoginProofResults::LOGIN_FAILED);
-        
 
+        // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
+        auto& dbWorker = server.GetDBWorker();
+        mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_LOG_WRONG_PASSWORD);
+        s.bind(data.accountID);
+        s.bind(this->GetRemoteAddressAndPort());
+        s.bind("WRONG_PASSWORD");
+        dbWorker.Enqueue(std::move(s));
+
+        packet << uint8_t(LoginProofResults::LOGIN_FAILED);
         packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }
     else

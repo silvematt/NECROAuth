@@ -11,6 +11,7 @@ enum LoginDatabaseStatements : uint32_t
 {
 	LOGIN_SEL_ACCOUNT_ID_BY_NAME, // name(string)
 	LOGIN_CHECK_PASSWORD,		  // id(uint32_t)
+	LOGIN_INS_LOG_WRONG_PASSWORD,     // id(uint32_t), username (string), ip:port(string)
 	LOGIN_UPD_ON_LOGIN
 };
 
@@ -42,6 +43,9 @@ public:
 
 			case LOGIN_CHECK_PASSWORD:
 				return conn.session->sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
+
+			case LOGIN_INS_LOG_WRONG_PASSWORD:
+				return conn.session->sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
 
 			case LOGIN_UPD_ON_LOGIN:
 				// TODO
