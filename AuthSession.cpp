@@ -165,9 +165,23 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     LoginDatabase& db = server.GetDirectDB();
     mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
     s.bind(login);
-    mysqlx::SqlResult result = db.Execute(s);
 
+    /*
+    * TOCHANGE left an example of using the worker thread here
+    auto& w = server.GetDBWorker();
+
+    for (int i = 0; i < 100000; i++)
+    {
+        mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
+        s.bind(login);
+
+        w.Enqueue(std::move(s));
+    }
+    */
+
+    mysqlx::SqlResult result = db.Execute(s);
     mysqlx::Row row = result.fetchOne();
+
 
     if (!row)
     {

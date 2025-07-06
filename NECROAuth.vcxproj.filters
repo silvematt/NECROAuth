@@ -122,5 +122,11 @@
     <ClInclude Include="LoginDatabase.h">
       <Filter>NECROAuth\Database</Filter>
     </ClInclude>
+    <ClInclude Include="DatabaseWorker.h">
+      <Filter>NECROAuth\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database.h">
+      <Filter>NECROAuth\Database</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

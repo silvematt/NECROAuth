@@ -40,6 +40,10 @@ int NECROAuth::Init()
 	if (directdb.Init() != 0)
 		return -2;
 
+	// TODO make sure setup goes well (make it return 0) and start as well
+	dbworker.Setup(Database::DBType::LOGIN_DATABASE);
+	dbworker.Start();
+
 	// Make TCPSocketManager
 	sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
 

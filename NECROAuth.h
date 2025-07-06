@@ -6,6 +6,7 @@
 #include "TCPSocketManager.h"
 
 #include "LoginDatabase.h"
+#include "DatabaseWorker.h"
 
 constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
 constexpr uint8_t CLIENT_VERSION_MINOR = 0;
@@ -30,14 +31,17 @@ private:
 
 	// directdb will be used for queries that run (and block) on the main thread
 	// to use only with data-critical code, for example, while making a response packet where an information in the database is needed to go further
-	// for "fire-and-forget" operations like updating logs, fields, etc we can use the DBWorkerThread
+	// for "fire-and-forget" operations like updating logs, fields, etc we can use the dbworker
 	LoginDatabase directdb; 
+	DatabaseWorker dbworker;
 
 public:
 	ConsoleLogger& GetConsoleLogger();
 	FileLogger& GetFileLogger();
 	TCPSocketManager& GetSocketManager();
+
 	LoginDatabase& GetDirectDB();
+	DatabaseWorker& GetDBWorker();
 
 	int						Init();
 	void					Start();
@@ -68,6 +72,11 @@ inline TCPSocketManager& NECROAuth::GetSocketManager()
 inline LoginDatabase& NECROAuth::GetDirectDB()
 {
 	return directdb;
+}
+
+inline DatabaseWorker& NECROAuth::GetDBWorker()
+{
+	return dbworker;
 }
 
 #endif

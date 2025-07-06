@@ -152,6 +152,8 @@
     <ClInclude Include="AuthCodes.h" />
     <ClInclude Include="AuthSession.h" />
     <ClInclude Include="ConsoleLogger.h" />
+    <ClInclude Include="Database.h" />
+    <ClInclude Include="DatabaseWorker.h" />
     <ClInclude Include="DBConnection.h" />
     <ClInclude Include="FileLogger.h" />
     <ClInclude Include="Logger.h" />

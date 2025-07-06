@@ -1,6 +1,7 @@
 #ifndef NECRO_LOGIN_DATABASE
 #define NECRO_LOGIN_DATABASE
 
+#include "Database.h"
 #include "DBConnection.h"
 
 //-------------------------------------------------------
@@ -16,14 +17,10 @@ enum LoginDatabaseStatements : uint32_t
 //-----------------------------------------------------------------------------------------------------
 // Wrapper for login database connection
 //-----------------------------------------------------------------------------------------------------
-class LoginDatabase
+class LoginDatabase : public Database
 {
-private:
-	DBConnection conn;
-
-
 public:
-	int Init()
+	int Init() override
 	{
 		if (conn.Init("localhost", 33060, "root", "root") == 0)
 			return 0;
@@ -35,9 +32,9 @@ public:
 	//-----------------------------------------------------------------------------------------------------
 	// Returns a mysqlx::SqlStatement, ready to be bound with parameters and executed by the caller
 	//-----------------------------------------------------------------------------------------------------
-	mysqlx::SqlStatement Prepare(LoginDatabaseStatements s)
+	mysqlx::SqlStatement Prepare(int enum_value) override
 	{
-		switch (s)
+		switch (enum_value)
 		{
 			case LOGIN_SEL_ACCOUNT_ID_BY_NAME:
 				return conn.session->sql("SELECT id FROM necroauth.users WHERE username = ?;");
@@ -56,7 +53,7 @@ public:
 	//-----------------------------------------------------------------------------------------------------
 	// Executes a SqlStatement in a try-catch block and returns a SqlResult
 	//-----------------------------------------------------------------------------------------------------
-	mysqlx::SqlResult Execute(mysqlx::SqlStatement& statement)
+	mysqlx::SqlResult Execute(mysqlx::SqlStatement& statement) override
 	{
 		try
 		{
