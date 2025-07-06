@@ -274,8 +274,8 @@ bool AuthSession::HandleAuthLoginProofPacket()
         // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
         auto& dbWorker = server.GetDBWorker();
         mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_LOG_WRONG_PASSWORD);
-        s.bind(data.accountID);
         s.bind(this->GetRemoteAddressAndPort());
+        s.bind(data.username);
         s.bind("WRONG_PASSWORD");
         dbWorker.Enqueue(std::move(s));
 
