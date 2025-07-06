@@ -8,6 +8,7 @@
 #endif
 
 #include <cstdint>
+#include <string>
 
 
 //--------------------------------------------------------------
@@ -51,6 +52,20 @@ public:
 	SocketAddress(const sockaddr& inSockAddr)
 	{
 		memcpy(&m_addr, &inSockAddr, sizeof(inSockAddr));
+	}
+
+	std::string RemoteAddressToString() const
+	{
+		const sockaddr_in* addr_in = reinterpret_cast<const sockaddr_in*>(&m_addr);
+		const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&addr_in->sin_addr.S_un.S_addr);
+
+		std::string result = std::to_string(static_cast<int>(bytes[0])) + "." +
+			std::to_string(static_cast<int>(bytes[1])) + "." +
+			std::to_string(static_cast<int>(bytes[2])) + "." +
+			std::to_string(static_cast<int>(bytes[3])) + ":" +
+			std::to_string(ntohs(addr_in->sin_port));
+
+		return result;
 	}
 };
 

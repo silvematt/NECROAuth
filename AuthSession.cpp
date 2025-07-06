@@ -269,8 +269,9 @@ bool AuthSession::HandleAuthLoginProofPacket()
 
     if (!authenticated)
     {
-        LOG_INFO("User tried to send proof with a wrong password.");
+        LOG_INFO("User " + this->GetRemoteAddressAndPort() + " tried to send proof with a wrong password.");
         packet << uint8_t(LoginProofResults::LOGIN_FAILED);
+        
 
         packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }

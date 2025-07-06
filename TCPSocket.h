@@ -87,7 +87,10 @@ public:
 
 		if (inSocket != INVALID_SOCKET)
 		{
-			return std::make_shared<T>(inSocket); // Assumes T has a constructor taking sock_t
+			std::shared_ptr<T> newSocket = std::make_shared<T>(inSocket);
+			newSocket->remoteAddress = addr;
+			newSocket->remotePort = ntohs(reinterpret_cast<sockaddr_in*>(&addr.m_addr)->sin_port);
+			return newSocket;
 		}
 		else
 		{
@@ -104,6 +107,11 @@ public:
 	void						QueuePacket(NetworkMessage& pckt);
 	int							Send();
 	int							Receive();
+
+	std::string GetRemoteAddressAndPort()
+	{
+		return remoteAddress.RemoteAddressToString();
+	}
 
 	void SetPfd(pollfd* fd)
 	{
