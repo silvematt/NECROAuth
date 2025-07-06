@@ -31,6 +31,7 @@ struct AuthHandler
 struct AccountData
 {
     std::string username;
+    uint32_t accountID; // accountid in the database
 
     std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
     NECROAES::IV iv;

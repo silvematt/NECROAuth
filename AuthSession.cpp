@@ -41,16 +41,21 @@ struct CPacketAuthLoginGatherInfo
 };
 static_assert(sizeof(CPacketAuthLoginGatherInfo) == (1 + 1), "CPacketAuthLoginGatherInfo size assert failed!");
 
-// Login Proof doesn't exist for now, this is just a dull packet
 struct SPacketAuthLoginProof
 {
     uint8_t		id;
     uint8_t		error;
+    uint16_t    size;
 
     uint32_t    clientsIVRandomPrefix;
-};
-static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 4), "SPacketAuthLoginProof size assert failed!");
 
+    uint8_t passwordSize;
+    uint8_t password[1];
+};
+static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 4 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
+#define	MAX_PASSWORD_LENGTH 16-1 // 1 is already in packet password[1] 
+#define S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE (sizeof(SPacketAuthLoginProof) + MAX_PASSWORD_LENGTH) // 16 is username length
+#define S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 // Login Proof doesn't exist for now, this is just a dull packet
 struct CPacketAuthLoginProof
@@ -74,7 +79,7 @@ std::unordered_map<uint8_t, AuthHandler> AuthSession::InitHandlers()
 	std::unordered_map<uint8_t, AuthHandler> handlers;
 
     handlers[PCKTID_AUTH_LOGIN_GATHER_INFO] = { AuthStatus::STATUS_GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket};
-    handlers[PCKTID_AUTH_LOGIN_ATTEMPT]     = { AuthStatus::STATUS_LOGIN_ATTEMPT, sizeof(SPacketAuthLoginProof), &HandleAuthLoginProofPacket};
+    handlers[PCKTID_AUTH_LOGIN_ATTEMPT]     = { AuthStatus::STATUS_LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket};
 
 	return handlers;
 }
@@ -128,7 +133,20 @@ void AuthSession::ReadCallback()
                 return;
             }
         }
+        else if (cmd == PCKTID_AUTH_LOGIN_ATTEMPT)
+        {
+            SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(packet.GetReadPointer());
+            size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
 
+            // Check for size
+            if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
+            {
+                Shutdown();
+                Close();
+                return;
+            }
+        }
+        
         // At this point, ensure the read size matches the whole packet size
         if (packet.GetActiveSize() < size)
             break;  // probably a short receive
@@ -198,6 +216,8 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
 
             TCPSocketManager::RegisterUsername(login, this);
             data.username = login;
+            data.accountID = row[0];
+            LOG_INFO("Account " + login + " has DB accountID: " + std::to_string(data.accountID));
             status = STATUS_LOGIN_ATTEMPT;
 
             // Done, will wait for client's proof packet
@@ -235,46 +255,59 @@ bool AuthSession::HandleAuthLoginProofPacket()
 
     packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_ATTEMPT);
 
-    /*
-    if (pcktData->key != 242) old dull check, here as an example of sending an error message
+    // Check the DB, see if password is correct
+    LoginDatabase& db = server.GetDirectDB();
+    mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_CHECK_PASSWORD);
+    s.bind(data.accountID);
+    mysqlx::SqlResult res =  db.Execute(s);
+
+    mysqlx::Row row = res.fetchOne();
+
+    std::string givenPass((char const*)pcktData->password, pcktData->passwordSize);
+
+    bool authenticated = row[0].get<std::string>() == givenPass;
+
+    if (!authenticated)
     {
-        LOG_INFO("User tried to send proof with a wrong key.");
+        LOG_INFO("User tried to send proof with a wrong password.");
         packet << uint8_t(LoginProofResults::LOGIN_FAILED);
 
         packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }
-    */
-
-    packet << uint8_t(LoginProofResults::LOGIN_SUCCESS);
-
-    packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
-
-    // Calculate this side's IV, making sure it's different from the client's
-    while(pcktData->clientsIVRandomPrefix == data.iv.prefix)
-        data.iv.RandomizePrefix();
-
-    data.iv.ResetCounter();
-
-    LOG_INFO("Client's IV Random Prefix: " + std::to_string(pcktData->clientsIVRandomPrefix) + " | Server's IV Random Prefix: " + std::to_string(data.iv.prefix));
-
-    // Calculate a random session key
-    data.sessionKey = NECROAES::GenerateSessionKey();
-        
-
-    // Convert sessionKey to hex string in order to print it
-    std::ostringstream sessionStrStream;
-    for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+    else
     {
-        sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
-    }
-    std::string sessionStr = sessionStrStream.str();
+        // Continue login
+        packet << uint8_t(LoginProofResults::LOGIN_SUCCESS);
 
-    LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
+        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
-    // Write session key to packet
-    for (int i = 0; i < AES_128_KEY_SIZE; ++i)
-    {
-        packet << data.sessionKey[i];
+        // Calculate this side's IV, making sure it's different from the client's
+        while (pcktData->clientsIVRandomPrefix == data.iv.prefix)
+            data.iv.RandomizePrefix();
+
+        data.iv.ResetCounter();
+
+        LOG_INFO("Client's IV Random Prefix: " + std::to_string(pcktData->clientsIVRandomPrefix) + " | Server's IV Random Prefix: " + std::to_string(data.iv.prefix));
+
+        // Calculate a random session key
+        data.sessionKey = NECROAES::GenerateSessionKey();
+
+
+        // Convert sessionKey to hex string in order to print it
+        std::ostringstream sessionStrStream;
+        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+        {
+            sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
+        }
+        std::string sessionStr = sessionStrStream.str();
+
+        LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
+
+        // Write session key to packet
+        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+        {
+            packet << data.sessionKey[i];
+        }
     }
 
     NetworkMessage m(packet);
