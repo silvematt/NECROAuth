@@ -72,6 +72,13 @@ public:
 			std::cerr << "Unknown exception caught!" << std::endl;
 		}
 	}
+
+	int Close() override
+	{
+		conn.Close();
+
+		return 0;
+	}
 };
 
 #endif

@@ -42,6 +42,26 @@ public:
             return -3;
         }
 	}
+
+    void Close()
+    {
+        try
+        {
+            session->close();
+        }
+        catch (const mysqlx::Error& err)
+        {
+            LOG_INFO(std::string("DBConnection Close Error: : ") + err.what());
+        }
+        catch (std::exception& ex)
+        {
+            LOG_INFO(std::string("DBConnection Close Error: Standard exception: ") + ex.what());
+        }
+        catch (...)
+        {
+            LOG_INFO(std::string("DBConnection Close Error: Unknown exception during session initialization."));
+        }
+    }
 };
 
 #endif

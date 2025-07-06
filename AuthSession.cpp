@@ -167,12 +167,13 @@ bool AuthSession::HandleAuthLoginGatherInfoPacket()
     s.bind(login);
 
     /*
-    * TOCHANGE left an example of using the worker thread here
+    * EXAMPLE OF WORKER THREAD USAGE
     auto& w = server.GetDBWorker();
 
     for (int i = 0; i < 100000; i++)
     {
-        mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
+        // MAKE SURE STATEMENT IS PREPARED FROM THE WORKER DB!!!
+        mysqlx::SqlStatement s = server.GetDBWorker().Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
         s.bind(login);
 
         w.Enqueue(std::move(s));

@@ -14,8 +14,8 @@
 // NECROAuthentication
 // 
 // The way the authentication works is the following: to authenticate, users will connect to the NECROAuth Server, providing login, password, and 
-// other info. The connection to the NECROAuth server will be done via TLS. When connection is granted, a sessionKey is generated (Diffie-Hellman?) and put
-// inside the database. The client will securely receive the sessionKey as well (while still being in TLS, or derive it with DH), and then receive the realmlist that will
+// other info. The connection to the NECROAuth server will be done via TLS. When connection is granted, a sessionKey is generated and put
+// inside the database. The client will securely receive the sessionKey as well (while still being in TLS), and then receive the realmlist that will
 // allow the user to connect to the game server.
 // 
 // The game server will NOT use TLS, instead, packets will be encrypted/decrypted by each end using the sessionKey, hashed with some random
@@ -38,11 +38,22 @@ int NECROAuth::Init()
 		return -1;
 
 	if (directdb.Init() != 0)
+	{
+		LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 		return -2;
+	}
 
-	// TODO make sure setup goes well (make it return 0) and start as well
-	dbworker.Setup(Database::DBType::LOGIN_DATABASE);
-	dbworker.Start();
+	if (dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
+	{
+		LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
+		return -3;
+	}
+
+	if (dbworker.Start() != 0)
+	{
+		LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+		return -4;
+	}
 
 	// Make TCPSocketManager
 	sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
@@ -81,6 +92,13 @@ void NECROAuth::Stop()
 int NECROAuth::Shutdown()
 {
 	// Shutdown
+	LOG_OK("Shutting down NECROAuth...");
+
+	directdb.Close();
+
+	dbworker.Stop();
+	dbworker.Join();
+	dbworker.CloseDB();
 
 	LOG_OK("Shut down of the NECROAuth completed.");
 	return 0;

@@ -26,7 +26,7 @@ private:
 	std::atomic<bool> running{ false };
 
 public:
-	void Setup(Database::DBType t)
+	int Setup(Database::DBType t)
 	{
 		switch (t)
 		{
@@ -38,34 +38,61 @@ public:
 				throw std::exception("No database type!");
 		}
 
-		db->Init();
+		if (db->Init() == 0)
+			return 0;
+		else
+		{
+			LOG_ERROR("Could not initialize DatabaseWorker internal db, MySQL may be not running.");
+			return 1;
+		}
 	}
 
-	void Start()
+	//-----------------------------------------------------------------------------------------------------
+	// Starts the thread with its ThreadRoutine
+	//-----------------------------------------------------------------------------------------------------
+	int Start()
 	{
 		if (thread.joinable())
 		{
-			std::cout << "Attempting to start while thread is still joinable. This should not happen. Trying to stop and join..." << std::endl;
+			LOG_WARNING("Attempting to start while thread is still joinable. This should not happen. Trying to stop and join.");
 			Stop();
 			Join();
 		}
 
 		running = true;
 		thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
+
+		return 0;
 	}
 
+	//-----------------------------------------------------------------------------------------------------
+	// Stops the ThreadRoutine when the queue will empty out
+	//-----------------------------------------------------------------------------------------------------
 	void Stop()
 	{
-		std::lock_guard<std::mutex> lock(queueMutex);
+		{
+			std::lock_guard<std::mutex> lock(queueMutex);
 
-		running = false;
+			running = false;
+		}
 		cond.notify_all();
 	}
 
+	// ----------------------------------------------------------------------------------------------------
+	// Joins the thread when it's possible
+	//-----------------------------------------------------------------------------------------------------
 	void Join()
 	{
 		if(thread.joinable())
 			thread.join();
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	// Closes the DBConnection session (should happen after worker Joins)
+	//-----------------------------------------------------------------------------------------------------
+	void CloseDB()
+	{
+		db->Close();
 	}
 
 	void Enqueue(mysqlx::SqlStatement&& s)
@@ -75,6 +102,11 @@ public:
 		qSize++;
 
 		cond.notify_all();
+	}
+
+	mysqlx::SqlStatement Prepare(int enum_val)
+	{
+		return db->Prepare(enum_val);
 	}
 
 	void ThreadRoutine()
@@ -110,20 +142,19 @@ public:
 				// Do stuff
 				try
 				{
-					std::cout << "executing one" << std::endl;
 					stmt.execute();
 				}
 				catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 				{
-					std::cerr << "MySQL error: " << err.what() << std::endl;
+					std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
 				}
 				catch (const std::exception& ex)  // catches standard exceptions
 				{
-					std::cerr << "Standard exception: " << ex.what() << std::endl;
+					std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
 				}
 				catch (...)
 				{
-					std::cerr << "Unknown exception caught!" << std::endl;
+					std::cerr << "DBWorker Unknown exception caught!" << std::endl;
 				}
 			}
 		}
