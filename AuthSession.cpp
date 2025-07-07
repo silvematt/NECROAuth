@@ -57,7 +57,6 @@ static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 4 + 1 + 1), "SPacket
 #define S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE (sizeof(SPacketAuthLoginProof) + MAX_PASSWORD_LENGTH) // 16 is username length
 #define S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
-// Login Proof doesn't exist for now, this is just a dull packet
 struct CPacketAuthLoginProof
 {
     uint8_t		id;
@@ -65,8 +64,9 @@ struct CPacketAuthLoginProof
     uint16_t    size;
 
     uint8_t     sessionKey[AES_128_KEY_SIZE];
+    uint8_t     greetcode[AES_128_KEY_SIZE];
 };
-static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + AES_128_KEY_SIZE), "CPacketAuthLoginProof size assert failed!");
+static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + AES_128_KEY_SIZE + AES_128_KEY_SIZE), "CPacketAuthLoginProof size assert failed!");
 #define C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 
@@ -257,9 +257,9 @@ bool AuthSession::HandleAuthLoginProofPacket()
 
     // Check the DB, see if password is correct
     LoginDatabase& db = server.GetDirectDB();
-    mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_CHECK_PASSWORD);
-    s.bind(data.accountID);
-    mysqlx::SqlResult res =  db.Execute(s);
+    mysqlx::SqlStatement dStmt1 = db.Prepare(LoginDatabaseStatements::LOGIN_CHECK_PASSWORD);
+    dStmt1.bind(data.accountID);
+    mysqlx::SqlResult res =  db.Execute(dStmt1);
 
     mysqlx::Row row = res.fetchOne();
 
@@ -267,20 +267,22 @@ bool AuthSession::HandleAuthLoginProofPacket()
 
     bool authenticated = row[0].get<std::string>() == givenPass;
 
+    auto& dbWorker = server.GetDBWorker();
     if (!authenticated)
     {
         LOG_INFO("User " + this->GetRemoteAddressAndPort() + " tried to send proof with a wrong password.");
 
         // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
-        auto& dbWorker = server.GetDBWorker();
-        mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_LOG_WRONG_PASSWORD);
-        s.bind(this->GetRemoteAddressAndPort());
-        s.bind(data.username);
-        s.bind("WRONG_PASSWORD");
-        dbWorker.Enqueue(std::move(s));
+        {
+            mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_LOG_WRONG_PASSWORD);
+            s.bind(this->GetRemoteAddressAndPort());
+            s.bind(data.username);
+            s.bind("WRONG_PASSWORD");
+            dbWorker.Enqueue(std::move(s));
+        }
 
         packet << uint8_t(LoginProofResults::LOGIN_FAILED);
-        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
+        packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
     }
     else
     {
@@ -300,7 +302,6 @@ bool AuthSession::HandleAuthLoginProofPacket()
         // Calculate a random session key
         data.sessionKey = NECROAES::GenerateSessionKey();
 
-
         // Convert sessionKey to hex string in order to print it
         std::ostringstream sessionStrStream;
         for (int i = 0; i < AES_128_KEY_SIZE; ++i)
@@ -315,6 +316,33 @@ bool AuthSession::HandleAuthLoginProofPacket()
         for (int i = 0; i < AES_128_KEY_SIZE; ++i)
         {
             packet << data.sessionKey[i];
+        }
+
+        // Create a new greetcode (RAND_bytes). Greetcode is appended with the first packet the client sends to the server, so the server can understand who's he talking to. ONE USE! Server will clear it after first usage
+        std::array<uint8_t, AES_128_KEY_SIZE> greetcode = NECROAES::GenerateSessionKey();
+
+        // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
+        // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
+        {
+            mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_DEL_PREV_SESSIONS);
+            s.bind(data.accountID);
+            dbWorker.Enqueue(std::move(s));
+        }
+
+        // Do an async insert on the DB worker to create a new active_session
+        {
+            mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_NEW_SESSION);
+            s.bind(data.accountID);
+            s.bind(mysqlx::bytes(data.sessionKey.data(), data.sessionKey.size()));
+            s.bind(this->GetRemoteAddress());
+            s.bind(mysqlx::bytes(greetcode.data(), greetcode.size()));
+            dbWorker.Enqueue(std::move(s));
+        }
+
+        // Write the greetcode to the packet
+        for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+        {
+            packet << greetcode[i];
         }
     }
 

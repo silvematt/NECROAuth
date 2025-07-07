@@ -9,9 +9,11 @@
 //-------------------------------------------------------
 enum LoginDatabaseStatements : uint32_t
 {
-	LOGIN_SEL_ACCOUNT_ID_BY_NAME, // name(string)
+	LOGIN_SEL_ACCOUNT_ID_BY_NAME = 0, // name(string)
 	LOGIN_CHECK_PASSWORD,		  // id(uint32_t)
-	LOGIN_INS_LOG_WRONG_PASSWORD,     // id(uint32_t), username (string), ip:port(string)
+	LOGIN_INS_LOG_WRONG_PASSWORD, // id(uint32_t), username (string), ip:port(string)
+	LOGIN_DEL_PREV_SESSIONS,	  // userid(uint32_t)
+	LOGIN_INS_NEW_SESSION,		  // userid(uint32_t), sessionKey(binary), authip(string), greetcode(binary)
 	LOGIN_UPD_ON_LOGIN
 };
 
@@ -46,6 +48,12 @@ public:
 
 			case LOGIN_INS_LOG_WRONG_PASSWORD:
 				return conn.session->sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
+
+			case LOGIN_DEL_PREV_SESSIONS:
+				return conn.session->sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
+
+			case LOGIN_INS_NEW_SESSION:
+				return conn.session->sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
 
 			case LOGIN_UPD_ON_LOGIN:
 				// TODO
