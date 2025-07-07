@@ -110,6 +110,11 @@ public:
 
 	std::string GetRemoteAddressAndPort()
 	{
+		return remoteAddress.RemoteAddressAndPortToString();
+	}
+
+	std::string GetRemoteAddress()
+	{
 		return remoteAddress.RemoteAddressToString();
 	}
 
