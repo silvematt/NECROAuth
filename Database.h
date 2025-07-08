@@ -1,5 +1,5 @@
-#ifndef NECRO_DATABASE
-#define NECRO_DATABASE
+#ifndef NECRO_DATABASE_H
+#define NECRO_DATABASE_H
 
 #include "DBConnection.h"
 

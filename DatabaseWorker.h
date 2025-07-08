@@ -1,5 +1,5 @@
-#ifndef NECRO_DATABASE_WORKER
-#define NECRO_DATABASE_WORKER
+#ifndef NECRO_DATABASE_WORKER_H
+#define NECRO_DATABASE_WORKER_H
 
 #include <thread>
 #include <mutex>
